@@ -25,7 +25,7 @@ from elasticsearch import Elasticsearch
 from pyterrier_elasticsearch import ElasticsearchRetrieve
 
 client = Elasticsearch(...)
-chatnoir = ElasticsearchRetrieve(
+es = ElasticsearchRetrieve(
     client=client,
     index="test-index",
     fields=["text", "title"],
@@ -37,7 +37,7 @@ chatnoir = ElasticsearchRetrieve(
 )
 
 # Use PyTerrier functions like with BatchRetrieve.
-chatnoir.search("python library")
+es.search("python library")
 ```
 
 Also, check out the [sample notebook](examples/search.ipynb)
