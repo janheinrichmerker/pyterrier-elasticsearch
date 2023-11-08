@@ -5,8 +5,8 @@ from typing import Optional, Any, Dict, NamedTuple, Mapping, Collection
 from elasticsearch import Elasticsearch
 from pandas import DataFrame
 from pandas.core.groupby import DataFrameGroupBy
-from pyterrier.batchretrieve import BatchRetrieveBase
 from pyterrier.model import add_ranks
+from pyterrier.transformer import Transformer
 from tqdm.auto import tqdm
 
 
@@ -16,8 +16,8 @@ class _Result(NamedTuple):
     source: Dict[str, Any]
 
 
-@dataclass
-class ElasticsearchRetrieve(BatchRetrieveBase):
+@dataclass(frozen=True)
+class ElasticsearchRetrieve(Transformer):
     name = "ElasticsearchRetrieve"
 
     client: Elasticsearch
@@ -55,9 +55,6 @@ class ElasticsearchRetrieve(BatchRetrieveBase):
         else:
             return self.columns
 
-    def __post_init__(self):
-        super().__init__(verbose=self.verbose)
-
     def _merge_result(
             self,
             row: Dict[str, Any],
@@ -68,11 +65,11 @@ class ElasticsearchRetrieve(BatchRetrieveBase):
             "docno": result.id,
             "score": result.score,
         }
-        for path, dest in self.columns.items():
+        for path, dest in self._columns.items():
             value = result.source
             for component in path.split("."):
                 value = value[component]
-            row["dest"] = value
+            row[dest] = value
         return row
 
     def _transform_query(self, topic: DataFrame) -> DataFrame:
@@ -84,14 +81,14 @@ class ElasticsearchRetrieve(BatchRetrieveBase):
 
         response = self.client.search(
             index=self.index,
-            track_total_hits=False,
             query={
                 "multi_match": {
                     "query": query,
                     "fields": list(self.fields),
                 }
             },
-            size=self.num_results
+            size=self.num_results,
+            track_total_hits=False,
         )
         results = (
             _Result(
@@ -126,7 +123,7 @@ class ElasticsearchRetrieve(BatchRetrieveBase):
             sort=False,
         )
         if self.verbose:
-            # Show p/home/heinrich/Repositories/pyterrier-elasticsearchrogress during reranking queries.
+            # Show progress during reranking queries.
             tqdm.pandas(
                 desc="Searching with Elasticsearch",
                 unit="query",
