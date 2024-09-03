@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch
 from pandas import DataFrame
 from pandas.core.groupby import DataFrameGroupBy
 from pyterrier.model import add_ranks
-from pyterrier.transformer import Transformer
+from pyterrier import Transformer
 from tqdm.auto import tqdm
 
 
